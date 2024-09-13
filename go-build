@@ -1,0 +1,4 @@
+#!/bin/sh
+
+go build -o bin/setkafka
+chmod +x bin/setkafka

@@ -1,0 +1,21 @@
+services:
+  go:
+    build:
+      args:
+        - APP_USER_ID
+    restart: on-failure
+    tty: true
+    volumes:
+      - ./:/go/src/app
+      - gopkg:/go/pkg
+      - gobin:/go/bin
+    networks:
+      devapp:
+
+networks:
+  devapp:
+    name: devapp
+
+volumes:
+  gopkg:
+  gobin:
