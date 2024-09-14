@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"setkafka/pkg/app"
 	"setkafka/pkg/kfk"
@@ -13,8 +14,9 @@ import (
 func init() {
 	topicCmd.AddCommand(topicCreateCmd)
 	topicCreateCmd.Flags().StringP("name", "n", "", "Topic name")
-	topicCreateCmd.Flags().IntP("partitions", "p", 1, "Number of partitions (default 1)")
-	topicCreateCmd.Flags().IntP("replications", "r", 1, "Replication factor (default 1)")
+	topicCreateCmd.Flags().IntP("partitions", "p", 1, "Number of partitions")
+	topicCreateCmd.Flags().IntP("replications", "x", 1, "Replication factor")
+	topicCreateCmd.Flags().IntP("retention", "r", 604800000, "Retention time")
 }
 
 var topicCreateCmd = &cobra.Command{
@@ -32,7 +34,10 @@ var topicCreateCmd = &cobra.Command{
 		logrus.Info("Create topic")
 		kf := kfk.NewKfk(&app.Cfg.Kafka)
 
-		config := map[string]string{} // TODO - add some config, maybe data retain
+		retention, _ := cmd.Flags().GetInt("retention")
+		config := map[string]string{
+			"retention.ms": fmt.Sprintf("%d", retention),
+		}
 		// replicaAssignment :=  // TODO - do we need this?
 
 		topicConfig := kafka.TopicSpecification{
