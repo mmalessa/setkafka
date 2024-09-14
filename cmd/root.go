@@ -18,7 +18,6 @@ var (
 )
 
 func Execute() error {
-
 	cobra.OnInitialize(initConfig, initLogs)
 	return rootCmd.Execute()
 }
