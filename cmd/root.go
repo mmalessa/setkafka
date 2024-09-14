@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"setkafka/pkg/app"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -40,31 +39,5 @@ func initConfig() {
 }
 
 func initLogs() {
-	logTimestampFormat := "2006-01-02 15:04:05" // https://golang.org/src/time/format.go
-	switch app.Cfg.App.LogFormat {
-	case "json":
-		logrus.SetFormatter(&logrus.JSONFormatter{
-			PrettyPrint:     false,
-			TimestampFormat: logTimestampFormat,
-		})
-	default:
-		logrus.SetFormatter(&logrus.TextFormatter{
-			DisableColors:   false,
-			FullTimestamp:   true,
-			TimestampFormat: logTimestampFormat,
-		})
-	}
-	switch app.Cfg.App.LogLevel {
-	case "trace":
-		logrus.SetLevel(logrus.TraceLevel)
-	case "debug":
-		logrus.SetLevel(logrus.DebugLevel)
-	case "info":
-		logrus.SetLevel(logrus.InfoLevel)
-	case "warn":
-		logrus.SetLevel(logrus.WarnLevel)
-	default: // error
-		logrus.SetLevel(logrus.ErrorLevel)
-	}
-	logrus.Debugf("LogLevel: %s", app.Cfg.App.LogLevel)
+	app.InitLogs()
 }
