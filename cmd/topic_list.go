@@ -19,7 +19,10 @@ var topicListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.Info("List topics")
 		kf := kfk.NewKfk(&app.Cfg.Kafka)
-		tl := kf.GetTopicList()
+		tl, err := kf.GetTopicList()
+		if err != nil {
+			panic(err)
+		}
 		fmt.Println("Topics in Kafka cluster:")
 		for _, topic := range tl.Topics {
 			fmt.Printf("%-30s %d\n", topic.Topic, len(topic.Partitions))

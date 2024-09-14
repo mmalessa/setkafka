@@ -35,9 +35,13 @@ func initConfig() {
 	}
 
 	fmt.Printf("Config file used: %s\n", absolutePath)
-	app.InitConfig(absolutePath)
+	if err := app.InitConfig(absolutePath); err != nil {
+		panic(err)
+	}
 }
 
 func initLogs() {
-	app.InitLogs()
+	if err := app.InitLogs(); err != nil {
+		panic(err)
+	}
 }

@@ -23,44 +23,50 @@ func NewKfk(kCfg *app.KafkaConfig) *Kfk {
 	return kfk
 }
 
-func (k *Kfk) adminConnect() *kafka.AdminClient {
+func (k *Kfk) adminConnect() (*kafka.AdminClient, error) {
 	adminConfig := &kafka.ConfigMap{
 		"bootstrap.servers": k.cfg.BootstrapServers,
 	}
 
 	adminClient, err := kafka.NewAdminClient(adminConfig)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return adminClient
+	return adminClient, nil
 }
 
-func (k *Kfk) producerConnect() *kafka.Producer {
+func (k *Kfk) producerConnect() (*kafka.Producer, error) {
 	producerConfig := &kafka.ConfigMap{
 		"bootstrap.servers": k.cfg.BootstrapServers,
 	}
 
 	producerClient, err := kafka.NewProducer(producerConfig)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return producerClient
+	return producerClient, nil
 }
 
-func (k *Kfk) GetTopicList() *kafka.Metadata {
-	pc := k.producerConnect()
+func (k *Kfk) GetTopicList() (*kafka.Metadata, error) {
+	pc, err := k.producerConnect()
+	if err != nil {
+		return nil, err
+	}
 	defer pc.Close()
 
 	// Pobieranie metadanych (w tym listy tematów)
 	metadata, err := pc.GetMetadata(nil, true, 10000)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return metadata
+	return metadata, nil
 }
 
-func (k *Kfk) CreateTopic(topicConfig kafka.TopicSpecification) {
-	ac := k.adminConnect()
+func (k *Kfk) CreateTopic(topicConfig kafka.TopicSpecification) error {
+	ac, err := k.adminConnect()
+	if err != nil {
+		return err
+	}
 	defer ac.Close()
 
 	results, err := ac.CreateTopics(
@@ -68,7 +74,7 @@ func (k *Kfk) CreateTopic(topicConfig kafka.TopicSpecification) {
 		[]kafka.TopicSpecification{topicConfig},
 	)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// TODO
@@ -79,11 +85,14 @@ func (k *Kfk) CreateTopic(topicConfig kafka.TopicSpecification) {
 			fmt.Printf("Topic %s created successfully\n", result.Topic)
 		}
 	}
-
+	return nil
 }
 
-func (k *Kfk) DeleteTopic(topicName string) {
-	ac := k.adminConnect()
+func (k *Kfk) DeleteTopic(topicName string) error {
+	ac, err := k.adminConnect()
+	if err != nil {
+		return err
+	}
 	defer ac.Close()
 
 	results, err := ac.DeleteTopics(
@@ -91,7 +100,7 @@ func (k *Kfk) DeleteTopic(topicName string) {
 		[]string{topicName},
 	)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// TODO
@@ -102,10 +111,6 @@ func (k *Kfk) DeleteTopic(topicName string) {
 			fmt.Printf("Topic %s deleted successfully\n", result.Topic)
 		}
 	}
-}
 
-func (k *Kfk) Debug() {
-
-	fmt.Printf("%#v\n", k.cfg)
-
+	return nil
 }

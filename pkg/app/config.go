@@ -25,19 +25,21 @@ var (
 	Cfg Config
 )
 
-func InitConfig(cfgFile string) {
+func InitConfig(cfgFile string) error {
 	config.WithOptions(config.ParseEnv)
 	config.AddDriver(yamlv3.Driver)
 	if err := config.LoadFiles(cfgFile); err != nil {
-		panic(err)
+		return err
 	}
 
 	Cfg.Kafka = KafkaConfig{}
 	if err := config.BindStruct("kafka", &Cfg.Kafka); err != nil {
-		panic(err)
+		return err
 	}
 	Cfg.App = AppConfig{}
 	if err := config.BindStruct("app", &Cfg.App); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }

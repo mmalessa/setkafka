@@ -43,6 +43,8 @@ var topicCreateCmd = &cobra.Command{
 			Config: config,
 		}
 
-		kf.CreateTopic(topicConfig)
+		if err := kf.CreateTopic(topicConfig); err != nil {
+			panic(err)
+		}
 	},
 }
