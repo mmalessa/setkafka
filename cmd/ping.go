@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"setkafka/pkg/app"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -16,6 +16,6 @@ var pingCmd = &cobra.Command{
 	Short: "Ping",
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.Info("Ping command")
-		fmt.Printf("%#v\n", appConfig)
+		logrus.Debugf("%#v\n", app.Cfg)
 	},
 }
