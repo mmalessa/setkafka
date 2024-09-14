@@ -1,0 +1,10 @@
+app:
+    # json | text
+    log_format: text
+    # trace | debug | info | warn | error
+    log_level: trace
+
+kafka:
+    dsn: ${KAFKA_DSN}
+    bootstrap_servers: "${KAFKA_BOOTSTRAP_SERVERS | kafka:9092}"
+    security_protocol: "${KAFKA_SECURITY_PROTOCOL | plaintext}"

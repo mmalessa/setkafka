@@ -1,6 +1,14 @@
 # Kafka topic configurator
 
-## Visual Studio Code
+## Dev notes
+
+### Environment
+```sh
+. envexport
+./bin/setkafka -c ./config.yaml
+```
+
+### Visual Studio Code
 
     On left bottom corner click >< icon and select Attach to running container... and select container $(APP_NAME)
     Install (Ctrl + Shift + X):
