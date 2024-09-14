@@ -47,6 +47,21 @@ func (k *Kfk) producerConnect() (*kafka.Producer, error) {
 	return producerClient, nil
 }
 
+func (k *Kfk) consumerConnect() (*kafka.Consumer, error) {
+
+	consumerConfig := &kafka.ConfigMap{
+		"bootstrap.servers":  k.cfg.BootstrapServers,
+		"group.id":           k.cfg.ConsumerGroupId,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": true,
+	}
+	consumerClient, err := kafka.NewConsumer(consumerConfig)
+	if err != nil {
+		return nil, err
+	}
+	return consumerClient, nil
+}
+
 func (k *Kfk) GetTopicList() (*kafka.Metadata, error) {
 	pc, err := k.producerConnect()
 	if err != nil {
@@ -111,6 +126,56 @@ func (k *Kfk) DeleteTopic(topicName string) error {
 			fmt.Printf("Topic %s deleted successfully\n", result.Topic)
 		}
 	}
+
+	return nil
+}
+
+func (k *Kfk) CopyTopic(topicNameFrom string, topicNameTo string) error {
+	cc, err := k.consumerConnect()
+	if err != nil {
+		return err
+	}
+	defer cc.Close()
+	pc, err := k.producerConnect()
+	if err != nil {
+		return err
+	}
+	defer pc.Close()
+
+	metadata, err := cc.GetMetadata(&topicNameFrom, false, 1000)
+	if err != nil {
+		return err
+	}
+	numPartitions := 0
+	if topicMetadata, ok := metadata.Topics[topicNameFrom]; ok {
+		numPartitions = len(topicMetadata.Partitions)
+	}
+	if numPartitions == 0 {
+		return fmt.Errorf("topic %s not found in metadata", topicNameFrom)
+	}
+	fmt.Printf("Number of partitions: %d\n", numPartitions)
+
+	if err := cc.Subscribe(topicNameFrom, nil); err != nil {
+		return err
+	}
+
+	for p := 0; p < numPartitions; p++ {
+		cc.Seek(kafka.TopicPartition{
+			Topic:     &topicNameFrom,
+			Partition: int32(p),
+			Offset:    kafka.OffsetBeginning,
+		}, -1)
+	}
+
+	fmt.Println("TODO TODO TODO")
+	// for {
+	// 	msg, err := cc.ReadMessage(-1)
+	// 	if err != nil {
+	// 		fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+	// 		continue
+	// 	}
+	// 	fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+	// }
 
 	return nil
 }

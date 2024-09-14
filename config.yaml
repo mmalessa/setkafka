@@ -8,3 +8,4 @@ kafka:
     dsn: ${KAFKA_DSN}
     bootstrap_servers: "${KAFKA_BOOTSTRAP_SERVERS | kafka:9092}"
     security_protocol: "${KAFKA_SECURITY_PROTOCOL | plaintext}"
+    consumer_group_id: "setkafka-consumer"

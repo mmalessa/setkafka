@@ -9,6 +9,7 @@ type KafkaConfig struct {
 	Dsn              string `mapstructure:"dsn"`
 	BootstrapServers string `mapstructure:"bootstrap_servers"`
 	SecurityProtocol string `mapstructure:"security_protocol"`
+	ConsumerGroupId  string `mapstructure:"consumer_group_id"`
 }
 
 type AppConfig struct {
