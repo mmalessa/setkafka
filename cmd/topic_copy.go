@@ -29,7 +29,8 @@ var topicCopyCmd = &cobra.Command{
 		logrus.Info("Copy topic")
 		kf := kfk.NewKfk(&app.Cfg.Kafka)
 		if err := kf.CopyTopic(nameFrom, nameTo); err != nil {
-			panic(err)
+			logrus.Error(err.Error())
+			os.Exit(0)
 		}
 	},
 }

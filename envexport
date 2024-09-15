@@ -1,4 +1,0 @@
-#!/bin/sh
-
-export KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-export KAFKA_SECURITY_PROTOCOL=plaintext

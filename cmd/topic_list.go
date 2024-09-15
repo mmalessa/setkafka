@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"setkafka/pkg/app"
 	"setkafka/pkg/kfk"
 
@@ -21,7 +22,8 @@ var topicListCmd = &cobra.Command{
 		kf := kfk.NewKfk(&app.Cfg.Kafka)
 		tl, err := kf.GetTopicList()
 		if err != nil {
-			panic(err)
+			logrus.Error(err.Error())
+			os.Exit(0)
 		}
 		fmt.Println("Topics in Kafka cluster:")
 		for _, topic := range tl.Topics {

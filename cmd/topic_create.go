@@ -49,7 +49,8 @@ var topicCreateCmd = &cobra.Command{
 		}
 
 		if err := kf.CreateTopic(topicConfig); err != nil {
-			panic(err)
+			logrus.Error(err.Error())
+			os.Exit(0)
 		}
 	},
 }

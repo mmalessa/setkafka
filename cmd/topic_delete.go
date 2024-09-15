@@ -26,7 +26,8 @@ var topicDeleteCmd = &cobra.Command{
 		logrus.Info("Delete topic")
 		kf := kfk.NewKfk(&app.Cfg.Kafka)
 		if err := kf.DeleteTopic(name); err != nil {
-			panic(err)
+			logrus.Error(err.Error())
+			os.Exit(0)
 		}
 	},
 }
