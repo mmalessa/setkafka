@@ -6,7 +6,7 @@ import (
 	"setkafka/pkg/app"
 	"setkafka/pkg/kfk"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

@@ -8,8 +8,9 @@ import (
 	"context"
 	"fmt"
 	"setkafka/pkg/app"
+	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type Kfk struct {
@@ -131,51 +132,108 @@ func (k *Kfk) DeleteTopic(topicName string) error {
 }
 
 func (k *Kfk) CopyTopic(topicNameFrom string, topicNameTo string) error {
+
+	if topicNameFrom == "" || topicNameTo == "" || topicNameFrom == topicNameTo {
+		return fmt.Errorf("invalid topics FROM: %s, TO: %s", topicNameFrom, topicNameTo)
+	}
+
 	cc, err := k.consumerConnect()
 	if err != nil {
 		return err
 	}
 	defer cc.Close()
+
 	pc, err := k.producerConnect()
 	if err != nil {
 		return err
 	}
 	defer pc.Close()
 
-	metadata, err := cc.GetMetadata(&topicNameFrom, false, 1000)
+	// Get Topics Metadata
+	metadata, err := cc.GetMetadata(&topicNameFrom, true, 1000)
 	if err != nil {
 		return err
 	}
-	numPartitions := 0
-	if topicMetadata, ok := metadata.Topics[topicNameFrom]; ok {
-		numPartitions = len(topicMetadata.Partitions)
-	}
-	if numPartitions == 0 {
-		return fmt.Errorf("topic %s not found in metadata", topicNameFrom)
-	}
-	fmt.Printf("Number of partitions: %d\n", numPartitions)
 
-	if err := cc.Subscribe(topicNameFrom, nil); err != nil {
-		return err
+	// Reset consumer group offset for topic
+	fmt.Printf("Reset topic %s offset\n", topicNameFrom)
+	numPartitionsFrom := 0
+	topicFromMetadata, ok := metadata.Topics[topicNameFrom]
+	if ok {
+		numPartitionsFrom = len(topicFromMetadata.Partitions)
 	}
-
-	for p := 0; p < numPartitions; p++ {
-		cc.Seek(kafka.TopicPartition{
+	if numPartitionsFrom == 0 {
+		return fmt.Errorf("topic %s not found", topicNameFrom)
+	}
+	var partitionsToAssign []kafka.TopicPartition
+	for _, partition := range topicFromMetadata.Partitions {
+		partitionsToAssign = append(partitionsToAssign, kafka.TopicPartition{
 			Topic:     &topicNameFrom,
-			Partition: int32(p),
+			Partition: partition.ID,
 			Offset:    kafka.OffsetBeginning,
-		}, -1)
+		})
+	}
+	cc.Assign(partitionsToAssign)
+
+	// Check topicTo exists and is empty
+	fmt.Printf("Check topic %s exists and is empty\n", topicNameTo)
+	numPartitionsTo := 0
+	topicToMetadata, ok := metadata.Topics[topicNameTo]
+	if ok {
+		numPartitionsTo = len(topicToMetadata.Partitions)
+	}
+	if numPartitionsTo == 0 {
+		return fmt.Errorf("topic %s not found", topicNameTo)
 	}
 
-	fmt.Println("TODO TODO TODO")
-	// for {
-	// 	msg, err := cc.ReadMessage(-1)
-	// 	if err != nil {
-	// 		fmt.Printf("Consumer error: %v (%v)\n", err, msg)
-	// 		continue
-	// 	}
-	// 	fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
-	// }
+	for _, partition := range topicToMetadata.Partitions {
+		lo, hi, err := pc.QueryWatermarkOffsets(topicNameTo, 0, 100)
+		if err != nil {
+			return err
+		}
+		// fmt.Printf("P: %d, L:%d, H:%d\n", partition.ID, lo, hi)
+		if msgCount := hi - lo; msgCount != 0 {
+			return fmt.Errorf("topic %s exists but is not empty (partition: %d)", topicNameTo, partition.ID)
+		}
+	}
 
+	fmt.Println("Copy")
+	// COPY
+	messageCount := 0
+	deliveryChan := make(chan kafka.Event)
+	for {
+		msg, err := cc.ReadMessage(1000 * time.Millisecond) // TODO customize timeout -> from config
+		if err != nil {
+			if kafkaErr, ok := err.(kafka.Error); ok {
+				if kafkaErr.Code() == kafka.ErrTimedOut {
+					break
+				}
+			} else {
+				return err
+			}
+		} else {
+			// fmt.Printf("Message: %s\n", string(msg.Value))
+			err := pc.Produce(&kafka.Message{
+				TopicPartition: kafka.TopicPartition{
+					Topic: &topicNameTo,
+				},
+				Value:   msg.Value,
+				Headers: msg.Headers,
+				Key:     msg.Key,
+			},
+				deliveryChan,
+			)
+			if err != nil {
+				return err
+			}
+			e := <-deliveryChan
+			m := e.(*kafka.Message)
+			if m.TopicPartition.Error != nil {
+				return fmt.Errorf("%s", m.TopicPartition.Error.Error())
+			}
+			messageCount++
+		}
+	}
+	fmt.Printf("Total messages counted: %d\n", messageCount)
 	return nil
 }

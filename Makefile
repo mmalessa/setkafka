@@ -12,8 +12,8 @@ help:
 build: ## Build image
 	$(DC) build
 
-app-init: up ## Init application
-	@$(DC) exec go bash -c "go build"
+binary: ## build binary file /bin/setkafka
+	@$(DC) exec go bash -c "go build -o bin/setkafka"
 
 up: ## Start the project docker containers
 	@$(DC) up -d
