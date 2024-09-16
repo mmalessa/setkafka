@@ -149,33 +149,17 @@ func (k *Kfk) CopyTopic(topicNameFrom string, topicNameTo string) error {
 	}
 	defer pc.Close()
 
+	if err := k.resetTopicOffset(cc, topicNameFrom); err != nil {
+		return err
+	}
+
 	// Get Topics Metadata
-	metadata, err := cc.GetMetadata(&topicNameFrom, true, 1000)
+	metadata, err := pc.GetMetadata(&topicNameTo, false, 1000)
 	if err != nil {
 		return err
 	}
 
-	// Reset consumer group offset for topic
-	fmt.Printf("Reset topic %s offset\n", topicNameFrom)
-	numPartitionsFrom := 0
-	topicFromMetadata, ok := metadata.Topics[topicNameFrom]
-	if ok {
-		numPartitionsFrom = len(topicFromMetadata.Partitions)
-	}
-	if numPartitionsFrom == 0 {
-		return fmt.Errorf("topic %s not found", topicNameFrom)
-	}
-	var partitionsToAssign []kafka.TopicPartition
-	for _, partition := range topicFromMetadata.Partitions {
-		partitionsToAssign = append(partitionsToAssign, kafka.TopicPartition{
-			Topic:     &topicNameFrom,
-			Partition: partition.ID,
-			Offset:    kafka.OffsetBeginning,
-		})
-	}
-	cc.Assign(partitionsToAssign)
-
-	// Check topicTo exists and is empty
+	// Check topicTo exists
 	fmt.Printf("Check topic %s exists and is empty\n", topicNameTo)
 	numPartitionsTo := 0
 	topicToMetadata, ok := metadata.Topics[topicNameTo]
@@ -186,6 +170,7 @@ func (k *Kfk) CopyTopic(topicNameFrom string, topicNameTo string) error {
 		return fmt.Errorf("topic %s not found", topicNameTo)
 	}
 
+	// Check topicTo is empty
 	for _, partition := range topicToMetadata.Partitions {
 		lo, hi, err := pc.QueryWatermarkOffsets(topicNameTo, 0, 100)
 		if err != nil {
@@ -208,32 +193,93 @@ func (k *Kfk) CopyTopic(topicNameFrom string, topicNameTo string) error {
 				if kafkaErr.Code() == kafka.ErrTimedOut {
 					break
 				}
-			} else {
-				return err
 			}
-		} else {
-			// fmt.Printf("Message: %s\n", string(msg.Value))
-			err := pc.Produce(&kafka.Message{
-				TopicPartition: kafka.TopicPartition{
-					Topic: &topicNameTo,
-				},
-				Value:   msg.Value,
-				Headers: msg.Headers,
-				Key:     msg.Key,
-			},
-				deliveryChan,
-			)
-			if err != nil {
-				return err
-			}
-			e := <-deliveryChan
-			m := e.(*kafka.Message)
-			if m.TopicPartition.Error != nil {
-				return fmt.Errorf("%s", m.TopicPartition.Error.Error())
-			}
-			messageCount++
+			return err
+
 		}
+		// fmt.Printf("Message: %s\n", string(msg.Value))
+		err = pc.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{
+				Topic: &topicNameTo,
+			},
+			Value:   msg.Value,
+			Headers: msg.Headers,
+			Key:     msg.Key,
+		},
+			deliveryChan,
+		)
+		if err != nil {
+			return err
+		}
+		e := <-deliveryChan
+		m := e.(*kafka.Message)
+		if m.TopicPartition.Error != nil {
+			return fmt.Errorf("%s", m.TopicPartition.Error.Error())
+		}
+		messageCount++
 	}
 	fmt.Printf("Total messages counted: %d\n", messageCount)
+	return nil
+}
+
+func (k *Kfk) GetTopicContent(topicName string) ([]*kafka.Message, error) {
+	cc, err := k.consumerConnect()
+	if err != nil {
+		return nil, err
+	}
+	defer cc.Close()
+
+	if err := k.resetTopicOffset(cc, topicName); err != nil {
+		return nil, err
+	}
+
+	messageCount := 0
+	var messages []*kafka.Message
+	for {
+		msg, err := cc.ReadMessage(1000 * time.Millisecond) // TODO customize timeout -> from config
+		if err != nil {
+			if kafkaErr, ok := err.(kafka.Error); ok {
+				if kafkaErr.Code() == kafka.ErrTimedOut {
+					break
+				}
+			}
+			return nil, err
+
+		}
+		messages = append(messages, msg)
+		messageCount++
+	}
+
+	return messages, nil
+}
+
+// TODO - common interface Producer|Consumer?
+func (k *Kfk) resetTopicOffset(consumer *kafka.Consumer, topicName string) error {
+
+	metadata, err := consumer.GetMetadata(&topicName, false, 1000)
+	if err != nil {
+		return err
+	}
+
+	// Reset consumer group offset for topic
+	fmt.Printf("Reset topic %s offset\n", topicName)
+	numPartitionsFrom := 0
+	topicMetadata, ok := metadata.Topics[topicName]
+	if ok {
+		numPartitionsFrom = len(topicMetadata.Partitions)
+	}
+	if numPartitionsFrom == 0 {
+		return fmt.Errorf("topic %s not found", topicName)
+	}
+	var partitionsToAssign []kafka.TopicPartition
+	for _, partition := range topicMetadata.Partitions {
+		partitionsToAssign = append(partitionsToAssign, kafka.TopicPartition{
+			Topic:     &topicName,
+			Partition: partition.ID,
+			Offset:    kafka.OffsetBeginning,
+		})
+	}
+	consumer.Assign(partitionsToAssign)
+
 	return nil
 }
