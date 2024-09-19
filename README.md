@@ -28,7 +28,7 @@ Customize the config.yaml file to suit your needs
 ### Environment
 ```sh
 . envexport
-./bin/setkafka -c ./config.yaml
+./bin/setkafka -c ./setkafka.yaml
 ```
 
 ### Visual Studio Code

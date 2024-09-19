@@ -22,8 +22,8 @@ func Execute() error {
 }
 
 func initConfig() {
-	cfgFile := "./config.yaml"
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", cfgFile, "config file (default is ./config.yaml)")
+	cfgFile := "./setkafka.yaml"
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", cfgFile, fmt.Sprintf("config file (default is %s)", cfgFile))
 
 	absolutePath, err := filepath.Abs(cfgFile)
 	if err != nil {
