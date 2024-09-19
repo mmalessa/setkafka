@@ -1,6 +1,7 @@
 services:
   go:
     build:
+      target: ${TARGET:-dev}
       args:
         - APP_USER_ID
     restart: on-failure

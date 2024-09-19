@@ -9,8 +9,16 @@ help:
 
 ### DEV
 .PHONY: build
-build: ## Build image
+build: build-dev
+
+.PHONY: build-dev
+build-dev: ## Build dev image
 	$(DC) build
+
+.PHONY: build-prod
+build-prod: ## Build prod image
+	@TARGET=prod $(DC) build
+
 
 binary: ## build binary file /bin/setkafka
 	@$(DC) exec go bash -c "go build -o bin/setkafka"

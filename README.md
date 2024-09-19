@@ -7,8 +7,19 @@ Allows you to create and delete topics in Kafka and copy messages from one topic
 
 ### Build binary
 ```sh
+make up
 make binary
 ```
+
+### Develop
+```sh
+make up
+make shell
+```
+#### Visual Studio Code
+- Install (Ctrl + Shift + X): Go (Go Team at Google)
+- On left bottom corner click >< icon and select Attach to running container... and select setkafka container
+- Run command (Ctrl + Shift + P) Go: Install/Update tools, select all and click OK
 
 ### Use
 Customize the config.yaml file to suit your needs
@@ -22,18 +33,11 @@ Customize the config.yaml file to suit your needs
 ./setkafka topic copy -h
 ```
 
-
-## Dev notes
-
-### Environment
+## DockerHub notes 
+Just for me, so I don't forget
 ```sh
-. envexport
-./bin/setkafka -c ./setkafka.yaml
+make build-prod
+docker image ls | grep setkafka
+docker tag setkafka:latest mmalessa/setkafka:0.0.1
+docker push mmalessa/setkafka:0.0.1
 ```
-
-### Visual Studio Code
-
-    On left bottom corner click >< icon and select Attach to running container... and select container $(APP_NAME)
-    Install (Ctrl + Shift + X):
-        Go (Go Team at Google)
-    Run command (Ctrl + Shift + P) Go: Install/Update tools, select all and click OK
