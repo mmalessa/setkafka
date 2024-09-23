@@ -56,6 +56,7 @@ func (k *Kfk) consumerConnect() (*kafka.Consumer, error) {
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": true,
 	}
+
 	consumerClient, err := kafka.NewConsumer(consumerConfig)
 	if err != nil {
 		return nil, err

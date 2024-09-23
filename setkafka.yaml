@@ -2,7 +2,7 @@ app:
     # json | text
     log_format: text
     # trace | debug | info | warn | error
-    log_level: trace
+    log_level: info
 
 kafka:
     bootstrap_servers: "${KAFKA_BOOTSTRAP_SERVERS | kafka:9092}"

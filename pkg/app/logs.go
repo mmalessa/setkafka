@@ -2,7 +2,7 @@ package app
 
 import "github.com/sirupsen/logrus"
 
-func InitLogs() error {
+func InitLogs(logLevel string) error {
 	logTimestampFormat := "2006-01-02 15:04:05" // https://golang.org/src/time/format.go
 	switch Cfg.App.LogFormat {
 	case "json":
@@ -17,7 +17,12 @@ func InitLogs() error {
 			TimestampFormat: logTimestampFormat,
 		})
 	}
-	switch Cfg.App.LogLevel {
+
+	if logLevel == "" {
+		logLevel = Cfg.App.LogLevel
+	}
+
+	switch logLevel {
 	case "trace":
 		logrus.SetLevel(logrus.TraceLevel)
 	case "debug":

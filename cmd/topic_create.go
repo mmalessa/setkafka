@@ -14,9 +14,9 @@ import (
 func init() {
 	topicCmd.AddCommand(topicCreateCmd)
 	topicCreateCmd.Flags().StringP("name", "n", "", "Topic name")
-	topicCreateCmd.Flags().IntP("partitions", "p", 1, "Number of partitions")
-	topicCreateCmd.Flags().IntP("replications", "x", 1, "Replication factor")
-	topicCreateCmd.Flags().IntP("retention", "r", 604800000, "Retention time")
+	topicCreateCmd.Flags().IntP("partitions", "", 1, "Number of partitions")
+	topicCreateCmd.Flags().IntP("replications", "", 1, "Replication factor")
+	topicCreateCmd.Flags().IntP("retention", "", 604800000, "Retention time")
 }
 
 var topicCreateCmd = &cobra.Command{

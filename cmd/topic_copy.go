@@ -11,8 +11,8 @@ import (
 
 func init() {
 	topicCmd.AddCommand(topicCopyCmd)
-	topicCopyCmd.Flags().StringP("name-from", "f", "", "Topic name FROM")
-	topicCopyCmd.Flags().StringP("name-to", "t", "", "Topic name TO")
+	topicCopyCmd.Flags().StringP("from", "", "", "Topic name FROM")
+	topicCopyCmd.Flags().StringP("to", "", "", "Topic name TO")
 }
 
 var topicCopyCmd = &cobra.Command{
