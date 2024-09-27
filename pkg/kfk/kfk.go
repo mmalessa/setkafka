@@ -27,6 +27,7 @@ func NewKfk(kCfg *app.KafkaConfig) *Kfk {
 func (k *Kfk) adminConnect() (*kafka.AdminClient, error) {
 	adminConfig := &kafka.ConfigMap{
 		"bootstrap.servers": k.cfg.BootstrapServers,
+		"security.protocol": k.cfg.SecurityProtocol,
 	}
 
 	adminClient, err := kafka.NewAdminClient(adminConfig)
@@ -39,6 +40,7 @@ func (k *Kfk) adminConnect() (*kafka.AdminClient, error) {
 func (k *Kfk) producerConnect() (*kafka.Producer, error) {
 	producerConfig := &kafka.ConfigMap{
 		"bootstrap.servers": k.cfg.BootstrapServers,
+		"security.protocol": k.cfg.SecurityProtocol,
 	}
 
 	producerClient, err := kafka.NewProducer(producerConfig)
@@ -52,6 +54,7 @@ func (k *Kfk) consumerConnect() (*kafka.Consumer, error) {
 
 	consumerConfig := &kafka.ConfigMap{
 		"bootstrap.servers":  k.cfg.BootstrapServers,
+		"security.protocol":  k.cfg.SecurityProtocol,
 		"group.id":           k.cfg.ConsumerGroupId,
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": true,
