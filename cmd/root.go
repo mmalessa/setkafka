@@ -14,7 +14,8 @@ import (
 var (
 	rootCmd = &cobra.Command{
 		Use:   "setkafka",
-		Short: "Set Kafka",
+		Short: "Kafka configuration tool",
+		Long:  `Kafka configuration tool (github.com/mmalessa)`,
 	}
 	verbose  bool
 	quiet    bool
